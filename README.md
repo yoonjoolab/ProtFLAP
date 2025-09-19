@@ -140,9 +140,9 @@ Compute per-atom and per-residue energy breakdowns
 
 Generate two output CSVs in the example/ folder:
 
-4hhr01_energy.csv → per-atom energies
+2of7A01_energy.csv → per-atom energies
 
-4hhr01_min.csv → per-residue averaged energies
+2of7A01_min.csv → per-residue averaged energies
 
 The minimized PDB will be saved as example/minimized_struc/2of7A01_min.pdb
 
