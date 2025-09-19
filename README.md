@@ -42,7 +42,6 @@ verbose
 
 SOLVATE GB-HPMF
 ```
-
 4. Update the paths in `preprocess.sh` to point to your Tinker executables, `force.key`, and parameter file:
 
 ```bash
@@ -58,7 +57,7 @@ All raw PDB files should be placed.
 To preprocess a PDB file:
 
 ```
-./preprocess.sh -i protein.pdb -o protein_results
+./preprocess.sh -i protein.pdb -o output_folder
 
 ```
 
@@ -66,7 +65,7 @@ Arguments:
 
 -i → Input file: Path to the PDB file you want to preprocess (e.g., protein.pdb).
 
--o → Output folder: Name of the folder where all results will be saved (e.g., protein_results). The folder will be created automatically if it doesn’t exist.
+-o → Output folder: Name of the folder where all results will be saved (e.g., output_folder). The folder will be created automatically if it doesn’t exist.
 
 What the script does:
 
@@ -90,7 +89,7 @@ input_min.csv → per-residue averaged energies
 After preprocessing, run ProtFlap prediction on the minimized PDB:
 
 ```
-python predict.py -i input_min.pdb -o predictions
+python predict.py -i output_folder/protein_min.pdb -o predictions
 
 ```
 ### Output
@@ -123,12 +122,12 @@ This example demonstrates a full run from raw PDB → preprocessing → predicti
 
 ### Step 1. Preprocess the PDB
 
-Place the raw PDB file in the `example/` folder (already included: `4hhr01.pdb`).
+Place the raw PDB file in the `example/` folder (already included: `2of7A01.pdb`).
 
 Run the preprocessing script:
 
 ```bash
-./preprocess.sh -i example/4hhr01.pdb -o output
+./preprocess.sh -i example/2of7A01.pdb -o example/minimized_struc
 
 ```
 This will:
@@ -145,17 +144,17 @@ Generate two output CSVs in the example/ folder:
 
 4hhr01_min.csv → per-residue averaged energies
 
-The minimized PDB will be saved as output/4hhr01_min.pdb
+The minimized PDB will be saved as example/minimized_struc/2of7A01_min.pdb
 
 Step 2. Run ProtFlap Prediction
 
 Use the minimized PDB as input for the prediction:
 
 ```
-python predict.py output/4hhr01_min.pdb
+python predict.py example/minimized_struc/2of7A01_min.pdb -o example/minimized_struc/predictions
 
 ```
-The output CSV (e.g., 4hhr01_min_redictions.csv) will contain:
+The output CSV (e.g., 2of7A01_min_predictions.csv) will contain:
 
 residue_index → Residue position in the protein chain
 
