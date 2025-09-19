@@ -1,18 +1,23 @@
 #!/bin/bash
 # ========================================
 # Protein Preprocessing with Tinker
-# Usage: ./preprocess.sh input.pdb
-# Output: minimized.pdb, energy.csv, energy_avg.csv
-# Only keeps original PDB, minimized PDB, and both CSVs
+# Usage: ./preprocess.sh -i input.pdb [-o output_folder]
+# Output: minimized PDB, energy.csv, energy_avg.csv in output folder
+# Intermediate files are deleted automatically
 # ========================================
 
-# === SETTINGS ===
+
 # Update these paths to match your system
 tinker="path/to/tinker/bin"               # Folder containing pdbxyz, xyzpdb, minimize, analyze
 force="path/to/force.key"         # Force key file
 param_file="path/to/amber99sb.prm"        # Parameter file
 min_grid=0.01                             # Minimization grid step
 
+# Tinker executables
+pdb2xyz="$tinker_dir/pdbxyz"
+xyz2pdb="$tinker_dir/xyzpdb"
+minimize="$tinker_dir/minimize"
+analyze="$tinker_dir/analyze"
 
 # === PARSE INPUT ARGUMENTS ===
 input=""
@@ -86,9 +91,10 @@ python3 preprocess_scripts/convert_to_csv.py "$outdir/${base}_min.pdb" "$outdir/
 python3 preprocess_scripts/average_per_residue.py "$outdir/${base}_energy.csv" "$outdir/${base}_min.csv"
 
 # === STEP 5: Cleanup intermediate files ===
-rm -f "$outdir/${base}.xyz" \
-      "$outdir/${base}.seq" \
+rm -f "${base}.xyz" \
+      "${base}.seq" \
       "$outdir/${base}_hydro.pdb" \
+      "$outdir/${base}_hydro.seq" \
       "$outdir/${base}_hydro.xyz" \
       "$outdir/${base}_hydro.xyz_2" \
       "$outdir/${base}_energy.txt" \
