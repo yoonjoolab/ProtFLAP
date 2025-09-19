@@ -106,9 +106,9 @@ The output folder will be created automatically if it does not exist.
  
 The prediction CSV contains three columns:
 
-residue_index → Index of the residue in the protein chain
+residue → Index of the residue in the protein chain
 
-predicted_prob → Predicted probability of flexibility (sigmoid output)
+probability → Predicted probability of flexibility (sigmoid output)
 
 predicted_binary → Binary classification (0 or 1) based on the threshold
 
@@ -138,13 +138,13 @@ Minimize the structure using the Amber99SB force field
 
 Compute per-atom and per-residue energy breakdowns
 
-Generate two output CSVs in the example/ folder:
+Generate two output CSVs in the example/minimized_struc folder:
 
 2of7A01_energy.csv → per-atom energies
 
 2of7A01_min.csv → per-residue averaged energies
 
-The minimized PDB will be saved as example/minimized_struc/2of7A01_min.pdb
+The minimized PDB will be saved as 2of7A01_min.pdb
 
 Step 2. Run ProtFlap Prediction
 
@@ -154,14 +154,7 @@ Use the minimized PDB as input for the prediction:
 python predict.py example/minimized_struc/2of7A01_min.pdb -o example/minimized_struc/predictions
 
 ```
-The output CSV (e.g., 2of7A01_min_predictions.csv) will contain:
-
-residue_index → Residue position in the protein chain
-
-predicted_prob → Predicted probability of flexibility (sigmoid output)
-
-predicted_binary → Binary classification (0 or 1)
-
+The output CSV (e.g., 2of7A01_min_predictions.csv) 
 
 **Notes**
 
