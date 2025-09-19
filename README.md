@@ -48,7 +48,7 @@ SOLVATE GB-HPMF
 4. Update the paths in `preprocess.sh` to point to your Tinker executables, `force.key`, and parameter file:
 
 ```bash
-tinker="path/to/tinker/bin"
+tinker="path/to/tinker/"
 force="path/to/force.key"
 param_file="path/to/amber99sb.prm"
 
