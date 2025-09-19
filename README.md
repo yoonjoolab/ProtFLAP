@@ -36,6 +36,9 @@ Download Tinker from the official website:
 3. Create your `force.key` file for the force field. **Include the following options in `force.key`:**
 
 ```
+parameters /path/to/amber99sb.prm
+forcefield /path/to/amber99sb.prm
+
 openmp-threads 1
 
 verbose
