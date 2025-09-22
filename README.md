@@ -22,8 +22,23 @@ Install them using the helper script:
 ./basic_install.sh requirements.txt
 
 ```
+### Step 2. Install FreeSASA
 
-### Step 2. Install Tinker
+ProtFlap uses FreeSASA to compute solvent-accessible surface areas.
+Install it system-wide with:
+
+```
+sudo apt update
+sudo apt install freesasa
+
+```
+Check installation:
+
+```
+freesasa --version
+
+```
+### Step 3. Install Tinker
 ProtFlap requires the **Tinker molecular modeling package** for energy minimization and structure preprocessing. 
 
 Download Tinker from the official website: 
