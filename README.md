@@ -164,7 +164,7 @@ Generate two output CSVs in the example/minimized_struc folder:
 
 The minimized PDB will be saved as 2of7A01_min.pdb
 
-Step 2. Run ProtFlap Prediction
+### Step 2. Run ProtFlap Prediction
 
 Use the minimized PDB as input for the prediction:
 
