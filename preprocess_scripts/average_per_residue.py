@@ -44,8 +44,6 @@ averaged_df = df.groupby('Residue')[energy_columns].mean().reset_index()
 # Renumber residues sequentially 1,2,3...
 averaged_df['Residue'] = pd.factorize(averaged_df['Residue'])[0] + 1
 
-# Delete the last row
-averaged_df = averaged_df.iloc[:-1]
 
 # Save CSV
 averaged_df.to_csv(output_csv, index=False, float_format='%.4f')
