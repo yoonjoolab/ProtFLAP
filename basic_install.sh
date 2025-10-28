@@ -1,21 +1,20 @@
 #!/bin/bash
 # ========================================
 # ProtFlap Installation Script
-# Sets up Python environment and installs dependencies
+# Installs Python dependencies and DSSP
 # ========================================
-
-ENV_NAME=protflap
-PYTHON_VER=3.8
-
-echo "🔹 Creating Conda environment: $ENV_NAME"
-conda create --name $ENV_NAME python=$PYTHON_VER -y
-
-echo "🔹 Activating environment"
-source $(conda info --base)/bin/activate $ENV_NAME
 
 echo "🔹 Installing Python dependencies"
 pip install -r requirements.txt
 
+echo "🔹 Installing DSSP (system dependency)"
+if ! command -v mkdssp &> /dev/null
+then
+    sudo apt update
+    sudo apt install -y dssp
+else
+    echo "   DSSP is already installed ✅"
+fi
+
 echo "✅ Installation complete!"
-echo "   Activate environment with: conda activate $ENV_NAME"
 
