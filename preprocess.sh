@@ -7,7 +7,7 @@
 # ========================================
 
 
-tinker_dir="/path/to/Tinker"
+tinker="/path/to/Tinker"
 force="/path/to/force.key"
 param_file="path/to/amber99sb.prm"       # Parameter file
 min_grid=0.01                             # Minimization grid step
