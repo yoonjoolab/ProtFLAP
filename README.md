@@ -32,6 +32,8 @@ ProtFlap uses FreeSASA for solvent-accessible surface area calculations.
 2. Build and install FreeSASA:
 
 ```
+git submodule init
+git submodule update
 cd freesasa
 autoreconf -i          # only necessary if cloning the git repo
 ./configure
