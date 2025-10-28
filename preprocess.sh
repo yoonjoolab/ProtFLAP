@@ -7,17 +7,16 @@
 # ========================================
 
 
-# Update these paths to match your system
-tinker="path/to/tinker/bin"               # Folder containing pdbxyz, xyzpdb, minimize, analyze
-force="path/to/force.key"         # Force key file
-param_file="path/to/amber99sb.prm"        # Parameter file
+tinker_dir="/path/to/Tinker"
+force="/path/to/force.key"
+param_file="path/to/amber99sb.prm"       # Parameter file
 min_grid=0.01                             # Minimization grid step
 
 # Tinker executables
-pdb2xyz="$tinker_dir/pdbxyz"
-xyz2pdb="$tinker_dir/xyzpdb"
-minimize="$tinker_dir/minimize"
-analyze="$tinker_dir/analyze"
+pdb2xyz="$tinker/pdbxyz"
+xyz2pdb="$tinker/xyzpdb"
+minimize="$tinker/minimize"
+analyze="$tinker/analyze"
 
 # === PARSE INPUT ARGUMENTS ===
 input=""
