@@ -7,65 +7,43 @@
 # ========================================
 
 
-tinker="/path/to/Tinker"
+tinker_dir="/path/to/Tinker"
 force="/path/to/force.key"
 param_file="path/to/amber99sb.prm"       # Parameter file
 min_grid=0.01                             # Minimization grid step
 
-# Tinker executables
-pdb2xyz="$tinker/pdbxyz"
-xyz2pdb="$tinker/xyzpdb"
-minimize="$tinker/minimize"
-analyze="$tinker/analyze"
+pdb2xyz="$tinker_dir/pdbxyz"
+xyz2pdb="$tinker_dir/xyzpdb"
+minimize="$tinker_dir/minimize"
+analyze="$tinker_dir/analyze"
 
-# === PARSE INPUT ARGUMENTS ===
 input=""
 outdir=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
-        -i|--input)
-            shift
-            input="$1"
-            ;;
-        -o|--output)
-            shift
-            outdir="$1"
-            ;;
-        *)
-            echo "Unknown option: $1"
-            echo "Usage: $0 -i input.pdb [-o output_folder]"
-            exit 1
-            ;;
+        -i|--input) shift; input="$1" ;;
+        -o|--output) shift; outdir="$1" ;;
+        *) echo "Unknown option: $1"; exit 1 ;;
     esac
     shift
 done
 
 if [ -z "$input" ]; then
     echo "Error: Input PDB file is required."
-    echo "Usage: $0 -i input.pdb [-o output_folder]"
     exit 1
 fi
 
-# Absolute paths
 input="$(realpath "$input")"
 input_dir="$(dirname "$input")"
 base="$(basename "$input" .pdb)"
 
-# Set output folder
-if [ -z "$outdir" ]; then
-    outdir="$input_dir"
-else
-    outdir="$(realpath "$outdir")"
-fi
+if [ -z "$outdir" ]; then outdir="$input_dir"; else outdir="$(realpath "$outdir")"; fi
 mkdir -p "$outdir"
 
 echo "🔹 Processing PDB: $input"
 echo "Output folder: $outdir"
 
-# =========================
-# Run Tinker in input folder
-# =========================
 pushd "$input_dir" > /dev/null
 
 # STEP 1: Add hydrogens + prepare XYZ
@@ -74,16 +52,24 @@ pushd "$input_dir" > /dev/null
 mv "${base}.pdb_2" "$outdir/${base}_hydro.pdb"
 "$pdb2xyz" "$outdir/${base}_hydro.pdb" -k "$force" "$param_file" ALL A ALL
 
-# STEP 2: Minimize structure
-"$minimize" "$outdir/${base}_hydro.xyz" -k "$force" "$param_file" "$min_grid"
+# STEP 2: Minimize structure (version-agnostic)
+# Try old syntax first; if fails, try new syntax
+if ! "$minimize" "$outdir/${base}_hydro.xyz" -k "$force" "$param_file" "$min_grid"; then
+    echo "⚠️ Old syntax failed, trying new Tinker syntax..."
+    "$minimize" "$outdir/${base}_hydro.xyz" "$min_grid" -k "$force" "$param_file"
+fi
+
 "$xyz2pdb" "$outdir/${base}_hydro.xyz_2" -k "$force" "$param_file"
 mv "$outdir/${base}_hydro.pdb_2" "$outdir/${base}_min.pdb"
 
 # STEP 3: Energy breakdown
-echo "amber99sb" | "$pdb2xyz" "$outdir/${base}_min.pdb" -k "$force" "$param_file"
-"$analyze" "$outdir/${base}_min.xyz" "$param_file" A > "$outdir/${base}_energy.txt"
+"$pdb2xyz" "$outdir/${base}_min.pdb" -k "$force" "$param_file" ALL A ALL
+"$xyz2pdb" "$outdir/${base}_min.xyz" -k "$force" "$param_file"
+"$analyze" "$outdir/${base}_min.xyz" -k "$force" "$param_file" A | \
+awk '/Potential Energy Breakdown over Atoms :/{flag=1} flag {print}' > "$outdir/${base}_energy.txt"
 
 popd > /dev/null
+
 
 # STEP 4: Convert results to CSV
 python3 preprocess_scripts/convert_to_csv.py "$outdir/${base}_min.pdb" "$outdir/${base}_energy.txt" "$outdir/${base}_energy.csv"
