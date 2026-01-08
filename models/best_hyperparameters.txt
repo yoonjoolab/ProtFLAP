@@ -1,12 +1,11 @@
 Best trial hyperparameters:
 learning_rate: 0.001
-dropout: 0.03773417328415976
+dropout: 0.1733765406650172
 weight_decay: 0.0001
-batch_norm: False
+batch_norm: True
 residual: True
 activation: ReLU
-use_bias: True
+use_bias: False
 hidden_dim: 64
-num_gcn_layers: 5
+num_gcn_layers: 3
 
-Best trial value (lowest validation loss): 0.0740

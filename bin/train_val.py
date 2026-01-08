@@ -36,6 +36,7 @@ from .evaluate import compute_metrics, evaluate_and_plot_confusion_matrix_per_re
 from .data_utils import load_rmsf_data
 from .prediction_utils import get_predictions, compare_rmsf_and_predictions
 
+
 torch.manual_seed(42)
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -346,7 +347,7 @@ def train_and_evaluate(trial, data_list):
     num_gcn_layers = trial.suggest_int("num_gcn_layers", 2, 6)
 
     n = len(data_list)
-    n_train = int(0.8 * n)
+    n_train = int(0.9 * n)
     train_ds, val_ds = random_split(data_list, [n_train, n - n_train])
 
     train_loader = DataLoader(train_ds, batch_size=16, shuffle=True, collate_fn=Batch.from_data_list)
@@ -554,27 +555,38 @@ def train_one_fold(
 
     return best_train_loss, f"best_model_fold{fold_id}.pth", (fpr, tpr, roc_auc)
 
-
-def run_cross_validation(dataset, best_params, n_splits=5):
+def run_cross_validation(dataset, best_params, n_splits=10):
     kf = KFold(n_splits=n_splits, shuffle=True, random_state=42)
     fold_results = []
+
     plt.figure(figsize=(8, 6))
+
     for fold_id, (train_idx, val_idx) in enumerate(kf.split(dataset), 1):
         print(f"Fold {fold_id}: {len(train_idx)} training graphs, {len(val_idx)} validation graphs")
-        best_val_loss, model_path, roc_data = train_one_fold(fold_id, train_idx, val_idx, dataset, best_params)
+
+        best_train_loss, model_path, roc_data = train_one_fold(
+            fold_id, train_idx, val_idx, dataset, best_params
+        )
+
         fpr, tpr, roc_auc = roc_data
         plt.plot(fpr, tpr, label=f"Fold {fold_id} (AUC={roc_auc:.4f})")
-        fold_results.append((best_val_loss, model_path))
+
+        fold_results.append((best_train_loss, model_path))
+
+    # === Select the best fold ===
     best_fold = min(fold_results, key=lambda x: x[0])
     os.rename(best_fold[1], "best_model_cv.pth")
     print(f"Best model selected: {best_fold[1]} -> saved as best_model_cv.pth")
+
+    # === Final ROC figure ===
     plt.plot([0, 1], [0, 1], 'k--', label="Random")
     plt.xlabel("False Positive Rate")
     plt.ylabel("True Positive Rate")
-    plt.title("ROC Curves for 5-Fold Cross-Validation")
+    plt.title(f"ROC Curves for {n_splits}-Fold Cross-Validation")
     plt.legend()
-    plt.savefig("roc_curves_5fold.png")
+    plt.savefig(f"roc_curves_{n_splits}fold.png")
     plt.close()
+
 
 if __name__ == "__main__":
     folder = os.getcwd()
@@ -588,7 +600,7 @@ if __name__ == "__main__":
 
     # Create Optuna study and optimize hyperparameters
     study = optuna.create_study(direction="minimize")
-    study.optimize(lambda trial: train_and_evaluate(trial, dataset), n_trials=20)  # or more trials
+    study.optimize(lambda trial: train_and_evaluate(trial, dataset), n_trials=50)  # or more trials
 
     trial = study.best_trial
     print("Best hyperparameters:")
@@ -603,5 +615,5 @@ if __name__ == "__main__":
         f.write(f"\nBest trial value (lowest validation loss): {trial.value:.4f}\n")
 
     # Run cross-validation with the best found parameters
-    run_cross_validation(dataset, trial.params, n_splits=5)
+    run_cross_validation(dataset, trial.params, n_splits=10)
 
