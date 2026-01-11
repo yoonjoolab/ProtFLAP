@@ -11,8 +11,7 @@
 set -euo pipefail
 
 tinker_dir="/path/to/Tinker"
-force="/path/to/force.key"
-param_file="path/to/amber99sb.prm"       # Parameter file
+force="/path/to/force.key"                # Parameter file
 min_grid=0.01                             # Minimization grid step
 
 pdb2xyz="$tinker_dir/pdbxyz"
@@ -102,31 +101,31 @@ for pdb in "${pdb_files[@]}"; do
     # -------------------------
     # STEP 1: Add Hydrogens
     # -------------------------
-    "$pdb2xyz" "$base.pdb" -k "$force" "$param_file" ALL A ALL
-    "$xyz2pdb" "${base}.xyz" -k "$force" "$param_file"
+    "$pdb2xyz" "$base.pdb" -k "$force" ALL A ALL
+    "$xyz2pdb" "${base}.xyz" -k "$force"
 
     mv "${base}.pdb_2" "$work_outdir/${base}_hydro.pdb"
 
-    "$pdb2xyz" "$work_outdir/${base}_hydro.pdb" -k "$force" "$param_file" ALL A ALL
+    "$pdb2xyz" "$work_outdir/${base}_hydro.pdb" -k "$force" 
 
     # -------------------------
     # STEP 2: Minimization
     # -------------------------
-    if ! "$minimize" "$work_outdir/${base}_hydro.xyz" -k "$force" "$param_file" "$min_grid"; then
+    if ! "$minimize" "$work_outdir/${base}_hydro.xyz" -k "$force" "$min_grid"; then
         echo "⚠ Old minimize syntax failed → trying new syntax"
-        "$minimize" "$work_outdir/${base}_hydro.xyz" "$min_grid" -k "$force" "$param_file"
+        "$minimize" "$work_outdir/${base}_hydro.xyz" "$min_grid" -k "$force"
     fi
 
-    "$xyz2pdb" "$work_outdir/${base}_hydro.xyz_2" -k "$force" "$param_file"
+    "$xyz2pdb" "$work_outdir/${base}_hydro.xyz_2" -k "$force" 
     mv "$work_outdir/${base}_hydro.pdb_2" "$work_outdir/${base}_min.pdb"
 
     # -------------------------
     # STEP 3: Energy Breakdown
     # -------------------------
-    "$pdb2xyz" "$work_outdir/${base}_min.pdb" -k "$force" "$param_file" ALL A ALL
-    "$xyz2pdb" "$work_outdir/${base}_min.xyz" -k "$force" "$param_file"
+    "$pdb2xyz" "$work_outdir/${base}_min.pdb" -k "$force" 
+    "$xyz2pdb" "$work_outdir/${base}_min.xyz" -k "$force" 
 
-    "$analyze" "$work_outdir/${base}_min.xyz" -k "$force" "$param_file" A | \
+    "$analyze" "$work_outdir/${base}_min.xyz" -k "$force" A | \
     awk '/Potential Energy Breakdown over Atoms :/{flag=1} flag {print}' \
     > "$work_outdir/${base}_energy.txt"
 
