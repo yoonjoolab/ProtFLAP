@@ -1,11 +1,18 @@
 import os
+import glob
 import torch
+import argparse
 import pandas as pd
 import numpy as np
 from torch_geometric.data import Data, Batch
+from sklearn.preprocessing import StandardScaler
+
 from bin.train_val import load_and_present_pdb
 from bin.gnn_model import NodeMLP_GCN
 
+# =====================================================
+# CONFIG
+# =====================================================
 torch.manual_seed(42)
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -13,53 +20,56 @@ MODEL_FILE = "models/best_model_cv.pth"
 
 default_params = {
     "learning_rate": 0.001,
-    "dropout": 0.03773417328415976,
+    "dropout": 0.1733765406650172,
     "weight_decay": 0.0001,
-    "batch_norm": False,
+    "batch_norm": True,
     "residual": True,
     "activation": "ReLU",
-    "use_bias": True,
+    "use_bias": False,
     "hidden_dim": 64,
-    "num_gcn_layers": 5
+    "num_gcn_layers": 3
 }
 
+# =====================================================
+# DATASET BUILDER (NO LABELS)
+# =====================================================
 def build_dataset_from_single_pdb_no_labels(pdb_file: str):
     """
-    Build dataset from a single PDB file for prediction.
-
-    Automatically looks for the CSV in the same folder as pdb_file by temporarily
-    changing the working directory.
+    Build graph dataset from a single PDB file.
+    Requires a CSV with the SAME basename in the SAME directory.
     """
-    import contextlib
 
     pdb_file = os.path.abspath(pdb_file)
-    pdb_folder = os.path.dirname(pdb_file)
+
+    if not pdb_file.lower().endswith(".pdb"):
+        raise ValueError(f"Input must be a .pdb file: {pdb_file}")
+
+    pdb_dir = os.path.dirname(pdb_file)
     pdb_name = os.path.splitext(os.path.basename(pdb_file))[0]
+    csv_file = os.path.join(pdb_dir, f"{pdb_name}.csv")
 
-    # Check CSV exists in the same folder
-    csv_file = os.path.join(pdb_folder, f"{pdb_name}.csv")
     if not os.path.exists(csv_file):
-        print(f"ERROR: Required CSV file not found for {pdb_name}: {csv_file}")
-        return []
+        raise FileNotFoundError(f"Required CSV not found: {csv_file}")
 
-    # Temporarily switch to PDB folder so load_and_present_pdb finds CSV
-    with contextlib.ExitStack() as stack:
-        old_cwd = os.getcwd()
-        os.chdir(pdb_folder)
-        try:
-            result = load_and_present_pdb(pdb_file)
-        finally:
-            os.chdir(old_cwd)
+    # Ensure CSV is discoverable by load_and_present_pdb
+    old_cwd = os.getcwd()
+    os.chdir(pdb_dir)
+
+    try:
+        result = load_and_present_pdb(pdb_file)
+    finally:
+        os.chdir(old_cwd)
 
     if result is None:
-        print(f"No data returned by load_and_present_pdb for {pdb_name}")
         return []
 
     node_features_tensor, protein_graphs, node_features_dict = result
 
-    from sklearn.preprocessing import StandardScaler
     scaler = StandardScaler()
-    node_features_tensor = torch.tensor(scaler.fit_transform(node_features_tensor), dtype=torch.float)
+    node_features_tensor = torch.tensor(
+        scaler.fit_transform(node_features_tensor),
+        dtype=torch.float
+    )
 
     data_list = []
 
@@ -68,38 +78,48 @@ def build_dataset_from_single_pdb_no_labels(pdb_file: str):
         if n == 0:
             continue
 
-        x = torch.tensor([node_features_dict[chain_id][i] for i in range(n)], dtype=torch.float)
+        x = torch.tensor(
+            [node_features_dict[chain_id][i] for i in range(n)],
+            dtype=torch.float
+        )
         x = torch.tensor(scaler.fit_transform(x), dtype=torch.float)
 
-        src_list, dst_list = [], []
-        coords = np.array([node_features_dict[chain_id][i][:3] for i in range(n)])
+        coords = np.array(
+            [node_features_dict[chain_id][i][:3] for i in range(n)]
+        )
+
+        src, dst = [], []
         for i in range(n):
             for j in range(i + 1, n):
-                dist = np.linalg.norm(coords[i] - coords[j])
-                if dist <= 30.0:
-                    src_list.extend([i, j])
-                    dst_list.extend([j, i])
+                if np.linalg.norm(coords[i] - coords[j]) <= 30.0:
+                    src += [i, j]
+                    dst += [j, i]
 
-        if len(src_list) == 0:
-            edge_index = torch.arange(n, dtype=torch.long).repeat(2, 1)
+        if len(src) == 0:
+            edge_index = torch.arange(n).repeat(2, 1)
         else:
-            edge_index = torch.tensor([src_list, dst_list], dtype=torch.long)
+            edge_index = torch.tensor([src, dst], dtype=torch.long)
 
         data = Data(x=x, edge_index=edge_index)
         data.pdb_name = pdb_name
+        data.chain_id = chain_id
         data_list.append(data)
 
     return data_list
 
 
+# =====================================================
+# PREDICTION FUNCTION
+# =====================================================
 def predict_single_pdb_no_labels(pdb_file, outdir=None):
-    """Predict RMSF-like values and save CSV in the output folder (default: same as PDB)."""
+
     dataset = build_dataset_from_single_pdb_no_labels(pdb_file)
+
     if len(dataset) == 0:
-        print(f"No data found for PDB: {pdb_file}")
+        print(f"⚠ No valid data found for {pdb_file}")
         return
 
-    in_feats = dataset[0].x.size(1)
+    in_feats = dataset[0].x.shape[1]
 
     model = NodeMLP_GCN(
         in_node_feats=in_feats,
@@ -118,40 +138,69 @@ def predict_single_pdb_no_labels(pdb_file, outdir=None):
     batch = Batch.from_data_list(dataset).to(device)
 
     with torch.no_grad():
-        logits, probs = model(batch.x, batch.edge_index)
-        probs_np = probs.cpu().numpy()
-        binary_preds = (probs >= 0.5).cpu().numpy().astype(np.float32)
-        residues = np.arange(batch.num_nodes)
+        _, probs = model(batch.x, batch.edge_index)
 
-    # Determine output folder
+    probs = probs.cpu().numpy()
+    binary = (probs >= 0.5).astype(np.int32)
+    residues = np.arange(len(probs))
+
+    # Output directory
     if outdir is None:
         outdir = os.path.dirname(os.path.abspath(pdb_file))
     else:
-        outdir = os.path.abspath(outdir)
         os.makedirs(outdir, exist_ok=True)
 
-    output_file = os.path.join(outdir, os.path.splitext(os.path.basename(pdb_file))[0] + "_predictions.csv")
-    df = pd.DataFrame({
+    out_csv = os.path.join(
+        outdir,
+        os.path.splitext(os.path.basename(pdb_file))[0] + "_predictions.csv"
+    )
+
+    pd.DataFrame({
         "residue_index": residues,
-        "predicted_prob": probs_np,
-        "predicted_binary": binary_preds
-    })
-    df.to_csv(output_file, index=False)
-    print(f"Predictions saved to {output_file}")
+        "predicted_prob": probs,
+        "predicted_binary": binary
+    }).to_csv(out_csv, index=False)
+
+    print(f"✅ Saved predictions → {out_csv}")
 
 
+# =====================================================
+# MAIN
+# =====================================================
 if __name__ == "__main__":
-    import argparse
-    import glob
+    parser = argparse.ArgumentParser(
+        description="Predict RMSF-like flexibility from PDB files using NodeMLP_GCN"
+    )
 
-    parser = argparse.ArgumentParser(description="Predict RMSF-like values for PDB files using NodeMLP_GCN.")
-    parser.add_argument("-i", "--input", required=True, help="Input PDB file (CSV must be in the same folder).")
-    parser.add_argument("-o", "--output", help="Output folder for predictions (default: same as PDB).")
+    parser.add_argument(
+        "-i", "--input",
+        required=True,
+        nargs="+",
+        help="One or more .pdb files (wildcards allowed, e.g. *.pdb)"
+    )
+
+    parser.add_argument(
+        "-o", "--output",
+        help="Output directory (default: same directory as each PDB)"
+    )
+
     args = parser.parse_args()
 
-    # Expand wildcards if needed
-    pdb_files = glob.glob(args.input)
+    # Expand wildcards
+    pdb_files = []
+    for item in args.input:
+        pdb_files.extend(glob.glob(item))
 
-    for pdb_file in pdb_files:
-        predict_single_pdb_no_labels(pdb_file, args.output)
+    pdb_files = sorted(set(pdb_files))
+
+    if not pdb_files:
+        raise SystemExit("❌ No PDB files found.")
+
+    # Enforce .pdb only
+    invalid = [f for f in pdb_files if not f.lower().endswith(".pdb")]
+    if invalid:
+        raise SystemExit(f"❌ Invalid inputs (only .pdb allowed): {invalid}")
+
+    for pdb in pdb_files:
+        predict_single_pdb_no_labels(pdb, args.output)
 
