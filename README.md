@@ -147,7 +147,7 @@ The predicted_binary column is always provided for classification-based analysis
 
 ## Quickstart Example
 
-This example demonstrates a full run from raw PDB → preprocessing → prediction using the provided `example/4hhr01.pdb`.
+This example demonstrates a full run from raw PDB → preprocessing → prediction using the provided `example/2of7A01.pdb`.
 
 ### Step 1. Preprocess the PDB
 
@@ -187,7 +187,7 @@ The output CSV (e.g., 2of7A01_min_predictions.csv)
 
 **Notes**
 
-Always use the _min.pdb produced by preprocess.sh as input.
+Always use the _min.pdb produced by preprocess.sh as input for prediction.
 
 The script outputs residue-level flexibility predictions.
 
