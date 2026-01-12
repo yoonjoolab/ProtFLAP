@@ -65,8 +65,8 @@ SOLVATE GB-HPMF
 4. Update the paths in `preprocess.py` to point to your Tinker executables, `force.key`, and parameter file:
 
 ```
-tinker="path/to/tinker/"
-force="path/to/force.key"
+tinker_dir ="path/to/tinker/"
+force = "path/to/force.key"
 
 ```
 
@@ -96,7 +96,7 @@ Computes per-atom and per-residue energy breakdowns.
 
 Outputs:
 
-input_energy.csv → per-atom energies
+input_min_energy.csv → per-atom energies
 
 input_min.csv → per-residue averaged energies
 
@@ -158,7 +158,7 @@ Compute per-atom and per-residue energy breakdowns
 
 Generate two output CSVs in the example folder:
 
-5m99A02_energy.csv → per-atom energies
+5m99A02_min_energy.csv → per-atom energies
 
 5m99A02_min.csv → per-residue averaged energies
 
