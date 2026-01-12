@@ -19,17 +19,17 @@ import pandas as pd
 # ===============================
 # Configuration
 # ===============================
-TINKER_DIR = Path("/home/lubna/Tinker")
-FORCE_KEY = TINKER_DIR / "force.key"
-MIN_GRID = "0.01"
+tinker_dir = "/path/to/Tinker"
+force = "/path/to/force.key" 
+min_grid = "0.01"
 
-PDB2XYZ = TINKER_DIR / "pdbxyz"
-XYZ2PDB = TINKER_DIR / "xyzpdb"
-MINIMIZE = TINKER_DIR / "minimize"
-ANALYZE = TINKER_DIR / "analyze"
+pdb2xyz = tinker_dir/"pdbxyz"
+xyz2pdb = tinker_dir/"xyzpdb"
+minimize = tinker_dir/"minimize"
+analyze = tinker_dir/"analyze"
 
 # Columns for per-residue averaging
-ENERGY_COLUMNS = [
+energy_columns = [
     'EB', 'EA', 'EBA', 'EUB', 'EAA', 'EOPB', 'EOPD', 'EID',
     'EIT', 'ET', 'EPT', 'EBT', 'EAT', 'ETT', 'EV', 'ER',
     'EDSP', 'EC', 'ECD', 'ED', 'EM', 'EP', 'ECT', 'ERXF',
@@ -78,16 +78,16 @@ for pdb_path in pdb_files:
     print("="*60)
 
     # Step 1: Add hydrogens
-    subprocess.run([str(PDB2XYZ), str(pdb_path), "-k", str(FORCE_KEY), "ALL", "A", "ALL"], check=True)
-    subprocess.run([str(XYZ2PDB), f"{base}.xyz", "-k", str(FORCE_KEY)], check=True)
+    subprocess.run([str(pdb2xyz), str(pdb_path), "-k", str(force), "ALL", "A", "ALL"], check=True)
+    subprocess.run([str(xyz2pdb), f"{base}.xyz", "-k", str(force)], check=True)
     hydro_pdb = work_dir / f"{base}_hydro.pdb"
     Path(f"{base}.pdb_2").rename(hydro_pdb)
-    subprocess.run([str(PDB2XYZ), str(hydro_pdb), "-k", str(FORCE_KEY), "ALL", "A", "ALL"], check=True)
+    subprocess.run([str(pdb2xyz), str(hydro_pdb), "-k", str(force), "ALL", "A", "ALL"], check=True)
 
     # Step 2: Minimize
     hydro_xyz = work_dir / f"{base}_hydro.xyz"
-    subprocess.run([str(MINIMIZE), str(hydro_xyz), "-k", str(FORCE_KEY), MIN_GRID], check=True)
-    subprocess.run([str(XYZ2PDB), f"{hydro_xyz}_2", "-k", str(FORCE_KEY)], check=True)
+    subprocess.run([str(minimize), str(hydro_xyz), "-k", str(force), min_grid], check=True)
+    subprocess.run([str(xyz2pdb), f"{hydro_xyz}_2", "-k", str(force)], check=True)
 
     # Rename minimized PDB
     min_pdb = work_dir / f"{base}_min.pdb"
@@ -134,7 +134,7 @@ for pdb_file in min_pdb_files:
 
     # Step 1: Convert minimized PDB -> XYZ
     try:
-        subprocess.run([PDB2XYZ, pdb_file, "-k", FORCE_KEY], check=True)
+        subprocess.run([pdb2xyz, pdb_file, "-k", force], check=True)
     except subprocess.CalledProcessError:
         print(f"❌ Failed to run pdbxyz for {pdb_file}")
         continue
@@ -145,7 +145,7 @@ for pdb_file in min_pdb_files:
     # Step 2: Run Tinker analyze
     try:
         with open(txt_file, "w") as f:
-            subprocess.run([ANALYZE, xyz_file, "-k", FORCE_KEY, "A"], stdout=f, check=True)
+            subprocess.run([analyze, xyz_file, "-k", force, "A"], stdout=f, check=True)
     except subprocess.CalledProcessError:
         print(f"❌ Failed to run analyze for {pdb_file}")
         continue
@@ -201,7 +201,7 @@ for pdb_file in min_pdb_files:
     # Step 5: Average per-residue (safe)
     df = pd.read_csv(output_csv)
     df['Residue'] = df['Residue'].ffill()
-    available_columns = [c for c in ENERGY_COLUMNS if c in df.columns]
+    available_columns = [c for c in energy_columns if c in df.columns]
 
     if not available_columns:
         print(f"⚠️ No matching energy columns found for {pdb_file}, skipping averaging.")

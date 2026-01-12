@@ -30,21 +30,12 @@ ProtFlap uses FreeSASA for solvent-accessible surface area calculations.
 👉 https://github.com/mittinatten/freesasa
 
 2. Build and install FreeSASA:
-
-```
-git submodule init
-git submodule update
-cd freesasa
-autoreconf -i          # only necessary if cloning the git repo
-./configure
-make && make install
-```
 3. Add FreeSASA to your system PATH (if needed):
 
 ```
 export PATH=$PATH:/path/to/freesasa/bin
 ```
-4.Verify the installation:
+4. Verify the installation:
 ```
 freesasa --version
 ```
@@ -71,11 +62,12 @@ verbose
 
 SOLVATE GB-HPMF
 ```
-4. Update the paths in `preprocess.sh` to point to your Tinker executables, `force.key`, and parameter file:
+4. Update the paths in `preprocess.py` to point to your Tinker executables, `force.key`, and parameter file:
 
-```bash
+```
 tinker="path/to/tinker/"
 force="path/to/force.key"
+param_file="path/to/amber99sb.prm"
 
 ```
 
@@ -85,7 +77,7 @@ All raw PDB files should be placed.
 To preprocess a PDB file:
 
 ```
-./preprocess.sh -i protein.pdb -o output_folder
+python preprocess.py -i protein.pdb -o output_folder
 
 ```
 
@@ -117,7 +109,7 @@ input_min.csv → per-residue averaged energies
 After preprocessing, run ProtFlap prediction on the minimized PDB:
 
 ```
-python predict.py -i output_folder/protein_min.pdb -o predictions
+python predict.py -i protein_min.pdb -o predictions
 
 ```
 ### Output
@@ -146,16 +138,16 @@ The predicted_binary column is always provided for classification-based analysis
 
 ## Quickstart Example
 
-This example demonstrates a full run from raw PDB → preprocessing → prediction using the provided `example/2of7A01.pdb`.
+This example demonstrates a full run from raw PDB → preprocessing → prediction using the provided `5m99A02.pdb`.
 
 ### Step 1. Preprocess the PDB
 
-Place the raw PDB file in the `example/` folder (already included: `2of7A01.pdb`).
+Place the raw PDB file in the folder (already included: `15m99A02.pdb`).
 
 Run the preprocessing script:
 
-```bash
-./preprocess.sh -i example/2of7A01.pdb -o example/minimized_struc
+```
+python preprocess.py -i 5m99A02.pdb -o example
 
 ```
 This will:
@@ -163,30 +155,29 @@ This will:
 Add hydrogens and convert the PDB to Tinker XYZ format
 
 Minimize the structure using the Amber99SB force field
-
 Compute per-atom and per-residue energy breakdowns
 
-Generate two output CSVs in the example/minimized_struc folder:
+Generate two output CSVs in the example folder:
 
-2of7A01_energy.csv → per-atom energies
+5m99A02_energy.csv → per-atom energies
 
-2of7A01_min.csv → per-residue averaged energies
+5m99A02_min.csv → per-residue averaged energies
 
-The minimized PDB will be saved as 2of7A01_min.pdb
+The minimized PDB will be saved as 5m99A02_min.pdb
 
 ### Step 2. Run ProtFlap Prediction
 
 Use the minimized PDB as input for the prediction:
 
 ```
-python predict.py example/minimized_struc/2of7A01_min.pdb -o example/minimized_struc/predictions
+python predict.py example/5m99A02_min.pdb -o example/predictions
 
 ```
-The output CSV (e.g., 2of7A01_min_predictions.csv) 
+The output CSV (e.g., 5m99A02_min_predictions.csv) 
 
 **Notes**
 
-Always use the _min.pdb produced by preprocess.sh as input for prediction.
+Always use the _min.pdb produced by preprocess.sh as input.
 
 The script outputs residue-level flexibility predictions.
 
