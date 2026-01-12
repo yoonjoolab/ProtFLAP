@@ -67,7 +67,6 @@ SOLVATE GB-HPMF
 ```
 tinker="path/to/tinker/"
 force="path/to/force.key"
-param_file="path/to/amber99sb.prm"
 
 ```
 
