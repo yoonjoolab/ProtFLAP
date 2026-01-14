@@ -169,7 +169,7 @@ The minimized PDB will be saved as 5m99A02_min.pdb
 Use the minimized PDB as input for the prediction:
 
 ```
-python predict.py example/5m99A02_min.pdb -o example/predictions
+python predict.py -i example/5m99A02_min.pdb -o example/predictions
 
 ```
 The output CSV (e.g., 5m99A02_min_predictions.csv) 
