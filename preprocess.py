@@ -16,11 +16,8 @@ from pathlib import Path
 import csv
 import pandas as pd
 
-# ===============================
-# Configuration
-# ===============================
-tinker_dir = "/path/to/Tinker"
-force = "/path/to/force.key" 
+tinker_dir = Path("/path/to/Tinker")
+force = "path/to/force.key"
 min_grid = "0.01"
 
 pdb2xyz = tinker_dir/"pdbxyz"
