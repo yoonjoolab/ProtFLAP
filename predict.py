@@ -19,17 +19,16 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 MODEL_FILE = "models/best_model_cv.pth"
 
 default_params = {
-    "learning_rate": 0.001,
-    "dropout": 0.1733765406650172,
+    "learning_rate": 0.0001,
+    "dropout": 0.06837534221738543,
     "weight_decay": 0.0001,
-    "batch_norm": True,
+    "batch_norm": False,
     "residual": True,
     "activation": "ReLU",
-    "use_bias": False,
-    "hidden_dim": 64,
-    "num_gcn_layers": 3
+    "use_bias": True,
+    "hidden_dim": 128,
+    "num_gcn_layers": 4
 }
-
 # =====================================================
 # DATASET BUILDER (NO LABELS)
 # =====================================================

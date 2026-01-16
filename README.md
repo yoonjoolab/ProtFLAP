@@ -30,15 +30,7 @@ ProtFlap uses FreeSASA for solvent-accessible surface area calculations.
 👉 https://github.com/mittinatten/freesasa
 
 2. Build and install FreeSASA:
-3. Add FreeSASA to your system PATH (if needed):
-
-```
-export PATH=$PATH:/path/to/freesasa/bin
-```
-4. Verify the installation:
-```
-freesasa --version
-```
+3. Add FreeSASA to your system PATH (if needed)
 
 ### Step 3. Install Tinker
 ProtFlap requires the **Tinker molecular modeling package** for energy minimization and structure preprocessing. 
@@ -65,8 +57,9 @@ SOLVATE GB-HPMF
 4. Update the paths in `preprocess.py` to point to your Tinker executables, `force.key`, and parameter file:
 
 ```
-tinker_dir ="path/to/tinker/"
-force = "path/to/force.key"
+tinker="path/to/tinker/"
+force="path/to/force.key"
+param_file="path/to/amber99sb.prm"
 
 ```
 
@@ -96,7 +89,7 @@ Computes per-atom and per-residue energy breakdowns.
 
 Outputs:
 
-input_min_energy.csv → per-atom energies
+input_energy.csv → per-atom energies
 
 input_min.csv → per-residue averaged energies
 
@@ -158,7 +151,7 @@ Compute per-atom and per-residue energy breakdowns
 
 Generate two output CSVs in the example folder:
 
-5m99A02_min_energy.csv → per-atom energies
+5m99A02_energy.csv → per-atom energies
 
 5m99A02_min.csv → per-residue averaged energies
 
@@ -169,7 +162,7 @@ The minimized PDB will be saved as 5m99A02_min.pdb
 Use the minimized PDB as input for the prediction:
 
 ```
-python predict.py -i example/5m99A02_min.pdb -o example/predictions
+python predict.py example/5m99A02_min.pdb -o example/predictions
 
 ```
 The output CSV (e.g., 5m99A02_min_predictions.csv) 
