@@ -600,7 +600,7 @@ if __name__ == "__main__":
 
     # Create Optuna study and optimize hyperparameters
     study = optuna.create_study(direction="minimize")
-    study.optimize(lambda trial: train_and_evaluate(trial, dataset), n_trials=50)  # or more trials
+    study.optimize(lambda trial: train_and_evaluate(trial, dataset), n_trials=20)  # or more trials
 
     trial = study.best_trial
     print("Best hyperparameters:")
