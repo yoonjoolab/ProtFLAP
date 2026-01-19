@@ -1,4 +1,4 @@
-# ProtFLAP
+# ProtFlap
 Prediction of protein flexibility
 ---
 
